@@ -1,25 +1,59 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useEffect } from "react";
+import { io } from "socket.io-client";
+import { useDispatch, useSelector } from "react-redux";
+import { listUsers } from "./actions/userActions";
+const App = () => {
+  const dispatch = useDispatch();
 
-function App() {
+  const userList = useSelector((state) => state.userList);
+  const { users, loading } = userList;
+  useEffect(() => {
+    const socket = io("ws://localhost:5000");
+
+    socket.on("connnection", () => {
+      console.log("connected to server");
+    });
+
+    socket.on("user-added", (user) => {
+
+      dispatch(listUsers());
+
+      console.log(user.id);
+    });
+
+    socket.on("message", (message) => {
+      console.log(message);
+    });
+
+    socket.on("disconnect", () => {
+      console.log("Socket disconnecting");
+    });
+    dispatch(listUsers());
+  }, [dispatch]);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div>
+      <table>
+        <thead>
+          <th>Name </th>
+          <th>Age </th>
+        </thead>
+        {!loading && users.length}
+
+        {users &&
+          users.map((user) => (
+            <>
+              <tbody>
+                <tr style={{ border: "1px" }}>
+                  <td> {user.name} </td>
+                  <td> {user.age} </td>
+                </tr>
+              </tbody>
+            </>
+          ))}
+      </table>
     </div>
   );
-}
+};
 
 export default App;
